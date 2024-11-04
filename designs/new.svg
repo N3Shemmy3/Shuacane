@@ -1,0 +1,45 @@
+<svg
+  version="1.2"
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 112 112"
+  width="112"
+  height="112"
+>
+  <style>
+    .dot {
+      fill: white;
+      filter: drop-shadow( 0 0 1px rgba(0, 0, 0, .7));
+    }
+
+    .text {
+      font-family: inherit;
+      font-size: inherit;
+    }
+  </style>
+   <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#4cb482"/>
+      <stop offset="30%" stop-color="#f3fe73"/>
+      <stop offset="70%" stop-color="#ffa552"/>
+      <stop offset="100%" stop-color="#ff5b42"/>
+    </linearGradient>
+  </defs>
+  <path
+    d="M 14,84
+      A 50 50 0 1 1 98,84"
+    fill="none"
+    stroke-width="6"
+    stroke-linecap="round"
+    stroke="url(#gradient)"
+  />
+  <path
+   class="dot"
+    d="M 14,79
+      a 4 4 0 0 0 0,8
+      a 4 4 0 0 0 0,-8"
+    transform="rotate(244 56 57)"
+  />
+  <text x="56" y="56" text-anchor="middle" class="text">
+        dasggdsgdsa
+      </text>
+</svg>
