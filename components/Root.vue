@@ -1,5 +1,7 @@
 <template>
-  <div class="w-full min-h-[100dvh] bg-white text-black">
+  <div
+    class="w-full min-h-[100dvh] bg-white text-black dark:bg-gray-900 dark:text-gray-100"
+  >
     <slot />
   </div>
 </template>
