@@ -1,5 +1,5 @@
 <template>
-  <Container class="space-y-6">
+  <Container class="space-y-8 scroll-smooth">
     <!--Cloudy or Sunny Card-->
     <CloudCard>
       <div class="p-4 space-y-4">
@@ -55,26 +55,40 @@
         </div>
       </div>
     </CloudCard>
-    <div class="-mx-4">
-      <!--Daily focast-->
-      <div class="space-y-2">
-        <span class="mx-4">Today</span>
+    <!--hourly focast-->
+    <section class="-mx-4 space-y-2">
+      <span class="mx-4 text-base">Today</span>
 
-        <!--Daily focast grid-->
-        <div
-          class="flex gap-3 px-4 overflow-x-scroll overflow-clip overscroll-contain scroll-smooth"
+      <!--Daily focast grid-->
+      <ul
+        class="flex gap-3 px-4 overflow-x-scroll overflow-clip overscroll-contain scroll-smooth"
+      >
+        <li
+          v-for="(n, index) in 10"
+          class="flex flex-col items-center justify-center px-4 py-2 rounded"
+          :class="{ 'bg-[#ffd89e]': index == 0 }"
         >
-          <div
-            v-for="(n, index) in 10"
-            class="flex flex-col items-center justify-center px-4 py-2 rounded"
-            :class="{ 'bg-[#ffd89e]': index == 0 }"
-          >
-            <span class="text-sm"> Now </span>
-            <Icon name="meteocons:clear-day-fill" />
-            <span class="text-base">26°</span>
+          <span class="text-sm"> Now </span>
+          <Icon name="meteocons:clear-day-fill" />
+          <span class="text-base">26°</span>
+        </li>
+      </ul>
+    </section>
+    <!--Daily focast-->
+    <section class="-mx-4 space-y-2">
+      <span class="mx-4 text-base">This week</span>
+      <ul class="flex flex-col">
+        <li v-for="n in 10" class="flex items-center px-4 py-2">
+          <div class="w-full flex flex-col">
+            <span class="text-lg">Tommorow</span>
+            <span class="text-base opacity-40">{{ n + 10 }} Aprl</span>
           </div>
-        </div>
-      </div>
-    </div>
+          <div class="w-fit flex items-center justify-between">
+            <h4 class="text-lg">26°</h4>
+            <Icon size="48" name="meteocons:clear-day-fill" />
+          </div>
+        </li>
+      </ul>
+    </section>
   </Container>
 </template>
