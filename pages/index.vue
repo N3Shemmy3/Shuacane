@@ -1,1 +1,5 @@
-<template>index</template>
+<template>
+  <Container>
+    <div></div>
+  </Container>
+</template>
