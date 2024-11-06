@@ -19,9 +19,9 @@ const styles = reactive({
 </script>
 
 <template>
-  <div class="rounded-md shadow-sm" :class="styles">
+  <div class="border-4 border-transparent rounded-md shadow-sm" :class="styles">
     <div
-      class="box-content"
+      class="md:flex md:flex-row md:columns-2"
       :class="{
         cloudy: props.cloudy,
       }"
@@ -40,7 +40,7 @@ const styles = reactive({
 }
 .cloudy {
   background: url("/public/clouds-bg.png");
-  background-position: center;
+  background-position: 60%;
   background-size: cover;
 }
 </style>
