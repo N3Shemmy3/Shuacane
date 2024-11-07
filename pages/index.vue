@@ -24,6 +24,8 @@ const error = ref(null);
 
 // Function to fetch current weather data
 const fetchWeather = async (city) => {
+  fetchForecast(city);
+  fetchHourlyData(city);
   const url = `${baseUrl.value}${endPoints.value.current}?key=${apiKey.value}&q=${city}`;
   loading.value = true;
   error.value = null;
@@ -130,8 +132,6 @@ const getConditionIcon = (condition) => {
 };
 onMounted(() => {
   fetchWeather(city.value);
-  fetchForecast(city.value);
-  fetchHourlyData(city.value);
 });
 </script>
 <template>
@@ -139,7 +139,7 @@ onMounted(() => {
     <!-- Loading State -->
     <div
       v-if="loading"
-      class="fixed z-[100] bg-white w-full h-screen overflow-clip flex p-8 flex-col items-center justify-center space-y-2"
+      class="fixed z-[100] bg-white left-0 top-0 right-0 bottom-0 overflow-clip flex p-8 flex-col items-center justify-center space-y-2"
     >
       Loading...
     </div>
@@ -311,7 +311,7 @@ onMounted(() => {
     </Container>
     <!-- Fallback when no data is loaded -->
     <div
-      class="fixed z-[100] bg-white w-full h-screen overflow-clip flex p-8 flex-col items-center justify-center space-y-2"
+      class="fixed z-[100] bg-white left-0 top-0 right-0 bottom-0 overflow-clip flex p-8 flex-col items-center justify-center space-y-2"
       v-else
     >
       <Icon name="ic:outline-wifi-off" class="size-[144px] md:size-[160px]" />
@@ -321,6 +321,7 @@ onMounted(() => {
       </p>
 
       <button
+        @click="fetchWeather(city)"
         class="w-fit flex items-center justify-center px-4 py-2 rounded-full aspect-video transition-all duration-300 bg-blue-500 text-white cursor-pointer hover:bg-opacity-50"
       >
         Retry
