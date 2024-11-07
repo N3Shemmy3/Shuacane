@@ -177,7 +177,7 @@ onMounted(() => {
             </div>
             <!-- Specifics -->
             <div
-              class="flex items-center justify-between *:flex *:items-center *:space-x-2 text-base"
+              class="flex items-center justify-between *:flex *:items-center *:space-x-2 text-sm ,md:text-base text-nowrap"
             >
               <!-- Pressure -->
               <span>
