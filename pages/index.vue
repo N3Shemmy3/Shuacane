@@ -16,7 +16,8 @@ const endPoints = ref({
 // Ref to store API response
 const weatherData = ref(null);
 const forecastData = ref(null);
-const city = ref("London");
+const hourlyData = ref([]);
+const city = ref("Lusaka");
 const currentTime = ref(null);
 const loading = ref(false);
 const error = ref(null);
@@ -32,11 +33,13 @@ const fetchWeather = async (city) => {
     if (!response.ok) {
       throw new Error(`Error: ${response.statusText}`);
     }
+
+    // Store the response data
     weatherData.value = await response.json();
-    console.log(weatherData.value);
+
     // Extract and format the time
-    if (data.location && data.location.localtime) {
-      const time = new Date(data.location.localtime);
+    if (weatherData.value.location && weatherData.value.location.localtime) {
+      const time = new Date(weatherData.value.location.localtime);
       currentTime.value = time.toLocaleString("en-US", {
         hour: "numeric",
         minute: "numeric",
@@ -49,6 +52,7 @@ const fetchWeather = async (city) => {
     loading.value = false;
   }
 };
+
 // Function to fetch weather forecast data
 const fetchForecast = async (city, days = 6) => {
   const url = `${baseUrl.value}${endPoints.value.forecast}?key=${apiKey.value}&q=${city}&days=${days}`;
@@ -61,13 +65,51 @@ const fetchForecast = async (city, days = 6) => {
       throw new Error(`Error: ${response.statusText}`);
     }
     forecastData.value = await response.json();
+    // console.log(forecastData.value);
   } catch (err) {
     error.value = err.message;
   } finally {
     loading.value = false;
   }
 };
-//
+const fetchHourlyData = async (city) => {
+  const url = `${baseUrl.value}${endPoints.value.forecast}?key=${apiKey.value}&q=${city}&days=1`; // Fetch forecast for 1 day
+  loading.value = true;
+  error.value = null;
+
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Error: ${response.statusText}`);
+    }
+    const data = await response.json();
+
+    // Extract hourly data for the current day
+    if (data.forecast && data.forecast.forecastday.length > 0) {
+      const hourlyDataArray = data.forecast.forecastday[0].hour;
+
+      // Get the current hour in the user's local timezone
+      const currentTime = new Date();
+      const currentHour = currentTime.getHours(); // Get current hour
+
+      // Find the index of the current hour in the hourly data
+      const startIndex = hourlyDataArray.findIndex((hour) => {
+        const hourTime = new Date(hour.time).getHours();
+        return hourTime === currentHour; // Compare the hour
+      });
+
+      // Slice the array starting from the current time
+      hourlyData.value = hourlyDataArray.slice(startIndex);
+      console.log(hourlyData.value); // Debug: Log the filtered hourly data
+    }
+  } catch (err) {
+    error.value = err.message;
+  } finally {
+    loading.value = false;
+  }
+};
+
+// get cions based on the condition
 const getConditionIcon = (condition) => {
   let icon = "";
   switch (condition) {
@@ -89,6 +131,7 @@ const getConditionIcon = (condition) => {
 onMounted(() => {
   fetchWeather(city.value);
   fetchForecast(city.value);
+  fetchHourlyData(city.value);
 });
 </script>
 <template>
@@ -110,7 +153,7 @@ onMounted(() => {
       <div class="md:w-full space-y-4 md:border-x">
         <!--Cloudy or Sunny Card-->
         <CloudCard>
-          <div class="md:w-full p-4 space-y-4">
+          <div class="md:w-full p-4 space-y-8">
             <div class="flex items-center space-x-2 justify-between">
               <div class="flex space-x-2 items-center">
                 <Icon name="solar:map-point-outline" />
@@ -127,26 +170,31 @@ onMounted(() => {
             <div
               class="flex flex-col items-center justify-center mt-10S mb-6 space-y-2"
             >
-              <h2 class="text-8xl">{{ weatherData.current.temp_c }}</h2>
+              <h2 class="text-7xl md:text-8xl">
+                {{ weatherData.current.temp_c }}°<sup>c</sup>
+              </h2>
               <h6>{{ weatherData.current.condition.text }}</h6>
             </div>
-            <!--Specifics-->
+            <!-- Specifics -->
             <div
               class="flex items-center justify-between *:flex *:items-center *:space-x-2 text-base"
             >
+              <!-- Pressure -->
               <span>
                 <Icon name="solar:water-line-duotone" />
-                <span>
-                  {{ weatherData.current.condition.pressure_mb }} hpa
-                </span>
+                <span> {{ weatherData.current.pressure_mb }} hPa </span>
               </span>
+
+              <!-- Humidity -->
               <span>
                 <Icon name="solar:waterdrop-outline" />
-                <span> {{ weatherData.current.condition.humidity }}% </span>
+                <span> {{ weatherData.current.humidity }}% </span>
               </span>
+
+              <!-- Wind Speed -->
               <span>
                 <Icon name="solar:wind-outline" />
-                <span> {{ weatherData.current.condition.wind_kph }}km/h </span>
+                <span> {{ weatherData.current.wind_kph }} km/h </span>
               </span>
             </div>
           </div>
@@ -183,47 +231,74 @@ onMounted(() => {
       </div>
       <!--Desktop sidebar-->
 
-      <!--Daily focast-->
       <section class="-mx-4 md:mx-0 space-y-8 md:w-80">
         <!--hourly focast-->
         <div>
           <span class="mx-4 text-base">Today</span>
 
           <ul
-            class="flex gap-3 px-4 py-2 overflow-x-scroll overflow-clip overscroll-contain scroll-smooth"
+            class="flex gap-3 px-4 py-2 overflow-x-scroll overflow-clip snap-x snap-mandatory overscroll-contain scroll-smooth"
           >
             <li
-              v-for="(day, index) in forecastData.forecast.forecastday"
+              v-for="(hour, index) in hourlyData"
               :key="index"
-              class="flex flex-col items-center justify-center px-4 py-2 rounded"
+              class="flex flex-col items-center justify-center space-y-2 px-4 py-2 rounded"
               :class="{ 'bg-[#ffd89e]': index == 0 }"
             >
-              <span class="text-sm">
+              <span v-if="index == 0" class="text-base text-nowrap">Now </span>
+              <span v-else class="text-base text-nowrap">
                 {{
-                  new Date(day.date).toLocaleDateString("en-US", {
-                    weekday: "long",
-                    month: "short",
-                    day: "numeric",
+                  new Date(hour.time).toLocaleTimeString("en-US", {
+                    hour: "numeric",
+                    hour12: true,
                   })
                 }}
               </span>
-              <Icon :name="getConditionIcon(day.day.condition.text)" />
-              <span class="text-base">{{ day.day.mintemp_c }}°</span>
+              <img
+                class="size-[32px] object-cover"
+                :src="hour.condition.icon"
+                :alt="hour.condition.text"
+              />
+
+              <span class="text-base">{{ hour.temp_c }}°C</span>
             </li>
           </ul>
         </div>
         <div class="space-y-2">
-          <span class="mx-4 text-lg">This week</span>
-          <!--Daily focast grid-->
+          <span class="mx-4 text-base">This week</span>
+          <!--Daily focast loist-->
           <ul class="flex flex-col">
-            <li v-for="n in 6" class="flex items-center px-4 py-2">
+            <li
+              v-for="(day, index) in forecastData.forecast.forecastday"
+              :key="index"
+              class="flex items-center px-4 py-2"
+            >
               <div class="w-full flex flex-col">
-                <span class="text-base">Tommorow</span>
-                <span class="text-base opacity-40">{{ n + 10 }} Aprl</span>
+                <span class="text-lg font-bold">{{
+                  new Date(day.date).toLocaleDateString("en-US", {
+                    weekday: "long",
+                  })
+                }}</span>
+                <span class="text-base opacity-60"
+                  >{{
+                    new Date(day.date).toLocaleDateString("en-US", {
+                      day: "numeric",
+                    })
+                  }}
+                  {{
+                    new Date(day.date).toLocaleDateString("en-US", {
+                      month: "short",
+                    })
+                  }}</span
+                >
               </div>
-              <div class="w-fit flex items-center justify-between">
-                <h4 class="text-lg">26°</h4>
-                <Icon size="48" name="meteocons:clear-day-fill" />
+              <div class="w-full flex items-center justify-between">
+                <h4 class="text-lg">{{ day.day.maxtemp_c }}°</h4>
+                <img
+                  class="size-[48px] object-cover"
+                  :src="day.day.condition.icon"
+                  :alt="day.day.condition.text"
+                />
               </div>
             </li>
           </ul>
