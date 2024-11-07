@@ -67,7 +67,25 @@ const fetchForecast = async (city, days = 6) => {
     loading.value = false;
   }
 };
-
+//
+const getConditionIcon = (condition) => {
+  let icon = "";
+  switch (condition) {
+    case "Clear":
+      icon = "meteocons:clear-day";
+      break;
+    case "Sunny":
+      icon = "meteocons:clear-day-fill";
+      break;
+    case "Partly cloudy":
+      icon = "meteocons:partly-cloudy-day-fill";
+      break;
+    case "Rain":
+      icon = "meteocons:rain-fill";
+      break;
+  }
+  return icon;
+};
 onMounted(() => {
   fetchWeather(city.value);
   fetchForecast(city.value);
@@ -189,7 +207,7 @@ onMounted(() => {
                   })
                 }}
               </span>
-              <Icon name="meteocons:clear-day-fill" />
+              <Icon :name="getConditionIcon(day.day.condition.text)" />
               <span class="text-base">{{ day.day.mintemp_c }}°</span>
             </li>
           </ul>
