@@ -17,7 +17,7 @@ const endPoints = ref({
 const weatherData = ref(null);
 const forecastData = ref(null);
 const hourlyData = ref([]);
-const city = ref("Lusaka");
+const city = ref("Solwezi");
 const currentTime = ref(null);
 const loading = ref(false);
 const error = ref(null);
@@ -131,14 +131,13 @@ const getConditionIcon = (condition) => {
   return icon;
 };
 const getSkyCondition = (condition) => {
-  if (
-    weatherData.current.condition.text.includes("sunny".toLocaleLowerCase()) ==
-    true
-  ) {
-    return "sun".toLocaleLowerCase();
+  let state = "sunny";
+  if (condition.toLocaleLowerCase().includes(state)) {
+    state = "sunny";
   } else {
-    return "rain".toLocaleLowerCase();
+    state = "rainy";
   }
+  return state;
 };
 onMounted(() => {
   fetchWeather(city.value);
@@ -155,7 +154,7 @@ onMounted(() => {
     </div>
 
     <Container
-      v-else-if="weatherData && weatherData.location && weatherData.current"
+      v-else-if="weatherData && weatherData.location && weatherData"
       class="space-y-8 md:space-y-0 scroll-smooth md:flex-row 2xl:border 2xl:rounded overflow-clip *:p-4"
     >
       <!--menu sidebar-->
