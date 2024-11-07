@@ -130,6 +130,16 @@ const getConditionIcon = (condition) => {
   }
   return icon;
 };
+const getSkyCondition = (condition) => {
+  if (
+    weatherData.current.condition.text.includes("sunny".toLocaleLowerCase()) ==
+    true
+  ) {
+    return "sun".toLocaleLowerCase();
+  } else {
+    return "rain".toLocaleLowerCase();
+  }
+};
 onMounted(() => {
   fetchWeather(city.value);
 });
@@ -156,7 +166,10 @@ onMounted(() => {
       </div>
       <div class="md:w-full space-y-4 md:border-x">
         <!--Cloudy or Sunny Card-->
-        <CloudCard>
+        <CloudCard
+          :cloudy="weatherData.current.condition.text.includes('cloudy')"
+          :sky="getSkyCondition(weatherData.current.condition.text)"
+        >
           <div class="md:w-full p-4 space-y-8">
             <div class="flex items-center space-x-2 justify-between">
               <div class="flex space-x-2 items-center">
