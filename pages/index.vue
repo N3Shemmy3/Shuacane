@@ -214,7 +214,7 @@ onMounted(() => {
     </Container>
     <!-- Fallback when no data is loaded -->
     <div
-      class="w-full h-screen flex p-8 flex-col items-center justify-center space-y-2"
+      class="w-full h-screen overflow-clip flex p-8 flex-col items-center justify-center space-y-2"
       v-else
     >
       <Icon name="ic:outline-wifi-off" class="size-[144px] md:size-[160px]" />
