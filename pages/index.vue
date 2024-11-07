@@ -154,7 +154,7 @@ onMounted(() => {
     </div>
 
     <Container
-      v-else-if="weatherData && weatherData.location && weatherData.current"
+      v-else-if="weatherData"
       class="space-y-8 md:space-y-0 scroll-smooth md:flex-row 2xl:border 2xl:rounded overflow-clip *:p-4"
     >
       <!--menu sidebar-->
