@@ -137,9 +137,13 @@ onMounted(() => {
 <template>
   <div>
     <!-- Loading State -->
-    <div v-if="loading">Loading...</div>
+    <div
+      v-if="loading"
+      class="fixed z-[100] bg-white w-full h-screen overflow-clip flex p-8 flex-col items-center justify-center space-y-2"
+    >
+      Loading...
+    </div>
 
-    <!-- Error State -->
     <Container
       v-else-if="weatherData && weatherData.location && weatherData.current"
       class="space-y-8 md:space-y-0 scroll-smooth md:flex-row 2xl:border 2xl:rounded overflow-clip *:p-4"
@@ -307,7 +311,7 @@ onMounted(() => {
     </Container>
     <!-- Fallback when no data is loaded -->
     <div
-      class="w-full h-screen overflow-clip flex p-8 flex-col items-center justify-center space-y-2"
+      class="fixed z-[100] bg-white w-full h-screen overflow-clip flex p-8 flex-col items-center justify-center space-y-2"
       v-else
     >
       <Icon name="ic:outline-wifi-off" class="size-[144px] md:size-[160px]" />
@@ -322,5 +326,11 @@ onMounted(() => {
         Retry
       </button>
     </div>
+    <Footer class="mt-auto align-bottom" />
   </div>
 </template>
+<style>
+a {
+  @apply w-fit h-fit transition-all duration-300 text-blue-800 hover:text-blue-300;
+}
+</style>
