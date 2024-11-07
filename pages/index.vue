@@ -56,7 +56,7 @@ const fetchWeather = async (city) => {
 };
 
 // Function to fetch weather forecast data
-const fetchForecast = async (city, days = 6) => {
+const fetchForecast = async (city, days = 7) => {
   const url = `${baseUrl.value}${endPoints.value.forecast}?key=${apiKey.value}&q=${city}&days=${days}`;
   loading.value = true;
   error.value = null;
@@ -269,7 +269,7 @@ onMounted(() => {
           </ul>
         </div>
         <div class="space-y-2">
-          <span class="mx-4 text-base">This week</span>
+          <span class="mx-4 text-base">7-Day forcast</span>
           <!--Daily focast loist-->
           <ul class="flex flex-col">
             <li
