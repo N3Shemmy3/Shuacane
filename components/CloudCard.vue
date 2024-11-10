@@ -7,7 +7,7 @@ const props = defineProps({
   sky: {
     validator(value, props) {
       // The value must match one of these strings
-      return ["sunny", "rainy"].includes(value);
+      return ["sunny", "rainy", "misty"].includes(value);
     },
     default: "sunny",
   },
@@ -15,6 +15,7 @@ const props = defineProps({
 const styles = reactive({
   sunny: props.sky == "sunny",
   rainy: props.sky == "rainy",
+  misty: props.sky == "misty",
 });
 </script>
 
@@ -35,8 +36,14 @@ const styles = reactive({
   background-color: #ffd89e;
   color: black;
 }
+.clear {
+  @apply bg-blue-300 dark:bg-blue-300 text-[#fafafa];
+}
 .rainy {
-  @apply bg-slate-500 dark:bg-slate-700 text-[#fafafa];
+  @apply bg-slate-400 dark:bg-slate-700 text-[#fafafa];
+}
+.misty {
+  @apply bg-gray-100 dark:bg-gray-700 text-[#323232];
 }
 .cloudy {
   background: url("/public/clouds-bg.png");

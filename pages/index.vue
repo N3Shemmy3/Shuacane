@@ -148,13 +148,47 @@ onMounted(() => {
     <!-- Loading State -->
     <div
       v-if="loading"
-      class="fixed z-[100] bg-white left-0 top-0 right-0 bottom-0 overflow-clip flex p-8 flex-col items-center justify-center space-y-2"
+      class="fixed z-[100] bg-white dark:bg-gray-900 left-0 top-0 right-0 bottom-0 overflow-clip flex p-8 flex-col items-center justify-center space-y-2"
     >
+      <svg
+        class="progress-circle"
+        viewBox="0 0 50 50"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <!-- Background circle -->
+        <circle
+          class="progress-circle-bg"
+          cx="25"
+          cy="25"
+          r="20"
+          fill="none"
+          stroke="rgba(0, 0, 0, 0.1)"
+          stroke-width="4"
+        ></circle>
+        <!-- Animated spinning arc -->
+        <circle
+          class="progress-circle-arc"
+          cx="25"
+          cy="25"
+          r="20"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="4"
+          stroke-linecap="round"
+          stroke-dasharray="125.6"
+          <!--
+          Total
+          circumference
+          --
+        >
+          >
+        </circle>
+      </svg>
       Loading...
     </div>
 
     <Container
-      v-else-if="weatherData"
+      v-else-if="weatherData != null"
       class="space-y-8 md:space-y-0 scroll-smooth md:flex-row 2xl:border 2xl:rounded overflow-clip *:p-4"
     >
       <!--menu sidebar-->
@@ -323,7 +357,7 @@ onMounted(() => {
     </Container>
     <!-- Fallback when no data is loaded -->
     <div
-      class="fixed z-[100] bg-white left-0 top-0 right-0 bottom-0 overflow-clip flex p-8 flex-col items-center justify-center space-y-2"
+      class="fixed z-[100] bg-white dark:bg-gray-900 left-0 top-0 right-0 bottom-0 overflow-clip flex p-8 flex-col items-center justify-center space-y-2"
       v-else
     >
       <Icon name="ic:outline-wifi-off" class="size-[144px] md:size-[160px]" />
@@ -345,5 +379,43 @@ onMounted(() => {
 <style>
 a {
   @apply w-fit h-fit transition-all duration-300 text-blue-800 hover:text-blue-300;
+}
+
+/* Size of the spinner */
+.progress-circle {
+  width: 64px;
+  height: 64px;
+  animation: rotate 2s linear infinite; /* Smooth rotation */
+}
+
+.progress-circle-arc {
+  stroke-dasharray: 125.6; /* Total circumference */
+  stroke-dashoffset: 0;
+  animation: dash 1.5s ease-in-out infinite;
+  transform-origin: center;
+  transform: rotate(-90deg); /* Start from top */
+}
+
+/* Smooth continuous rotation */
+@keyframes rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Smooth dash transitions */
+@keyframes dash {
+  0% {
+    stroke-dashoffset: 125.6; /* Circle fully hidden */
+  }
+  50% {
+    stroke-dashoffset: 31.4; /* Partial arc visible */
+  }
+  100% {
+    stroke-dashoffset: 125.6; /* Circle hidden again */
+  }
 }
 </style>
