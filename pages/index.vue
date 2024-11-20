@@ -161,6 +161,15 @@ const specifics = [
   },
   { icon: "meteocons:uv-index", title: "UV Index", text: "2.00" },
 ];
+const isOnline = ref(true);
+
+const updateStatus = () => {
+  return (isOnline.value = !isOnline.value);
+};
+onMounted(() => {
+  window.addEventListener("online", updateStatus);
+  window.addEventListener("offline", updateStatus);
+});
 </script>
 <template>
   <div>
@@ -391,7 +400,7 @@ const specifics = [
     <!-- Fallback when no data is loaded -->
     <div
       class="fixed z-[100] bg-white left-0 top-0 right-0 bottom-0 overflow-clip flex p-8 flex-col items-center justify-center space-y-2"
-      v-else
+      v-if="isOnline"
     >
       <Icon name="ic:outline-wifi-off" class="size-[144px] md:size-[160px]" />
       <h3 class="text-xl md:text-2xl">You're offline</h3>
