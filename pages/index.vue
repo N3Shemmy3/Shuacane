@@ -156,6 +156,22 @@ const createMap = (lon, lat) => {
   L.marker([lat, lon]).addTo(map).bindPopup("Current City").openPopup();
   console.log(map);
 };
+// toggle overlay visibility depending on the id
+function toggleOverlay(event) {
+  const targetId = event.id;
+  switch (targetId) {
+    case "message-overlay": {
+      //hide the other to avoid both being vissible at once
+      showSearchView.value = false;
+      showDialog.value = !showDialog.value;
+    }
+    case "search-overlay": {
+      //hide the other to avoid both being vissible at once
+      showDialog.value = false;
+      showSearchView.value = !showSearchView;
+    }
+  }
+}
 onMounted(() => {
   fetchWeather(city.value);
 });
@@ -181,44 +197,62 @@ const specifics = [
 <template>
   <div>
     <!--Search popup overlay-->
-    <div
-      v-if="isSearchDialogOpen"
-      @click="isSearchDialogOpen = !isSearchDialogOpen"
-      class="fixed z-50 left-0 top-0 right-0 bottom-0 flex items-center justify-center bg-black bg-opacity-50"
-    >
-      <!-- search popup card-->
+    <Transition name="slide-fade" :duration="300">
       <div
-        class="w-full mx-8 md:w-[450px] flex flex-col h-fit bg-white rounded-md overflow-clip"
+        v-if="isSearchDialogOpen"
+        @click="isSearchDialogOpen = !isSearchDialogOpen"
+        class="outer fixed z-50 left-0 top-0 right-0 bottom-0 flex items-center justify-center bg-black bg-opacity-50"
       >
-        <!-- search searchbox-->
+        <!-- search popup card-->
         <div
-          id="searchbox"
-          class="w-full flex items-center space-x-2 px-4 py-2"
+          class="inner w-full mx-8 md:w-[450px] flex flex-col h-fit bg-white rounded-md overflow-clip"
         >
-          <Icon name="ic:outline-search" size="24" />
-          <input
-            type="text"
-            class="w-full border-none outline-none"
-            placeholder="Search city"
-          />
-          <button class="size-10 flex items-center justify-center">
-            <Icon name="ic:outline-clear" size="24" />
-          </button>
-        </div>
-        <!-- search results-->
-        <ul id="search-saved-cities">
-          <li class="flex px-4 py-2"></li>
-        </ul>
-        <ul v-if="false" id="search-results-cicities"></ul>
-        <div
-          v-else
-          class="min-h-60 flex flex-col gap-4 items-center justify-center"
-        >
-          <Icon name="ic:outline-history" size="24" />
-          <h5>No search results</h5>
+          <!-- search searchbox-->
+          <div
+            id="searchbox"
+            class="w-full flex items-center space-x-2 px-2 py-2 border-b"
+          >
+            <Icon name="ic:outline-search" size="30" class="mx-2" />
+            <input
+              type="text"
+              class="w-full border-none outline-none"
+              placeholder="Search city"
+            />
+            <button class="size-10 flex items-center justify-center">
+              <Icon name="ic:outline-clear" size="22" />
+            </button>
+          </div>
+          <!-- search results-->
+          <ul id="search-saved-cities">
+            <li
+              class="flex items-center px-4 py-1 transition-colors duration-300 hover:bg-gray-100 cursor-pointer"
+            >
+              <Icon name="ic:outline-location-on" size="24" />
+              <div class="ml-2 mr-auto">
+                <h6 class="text-base">Item title</h6>
+                <p class="text-sm opacity-70">item subtitile</p>
+              </div>
+              <button class="p-2">
+                <Icon name="ic:outline-bookmark-border" size="22" />
+              </button>
+            </li>
+          </ul>
+          <ul v-if="false" id="search-results-cicities"></ul>
+          <!-- No results div-->
+          <div
+            v-else
+            class="min-h-60 flex flex-col gap-4 items-center justify-center"
+          >
+            <Icon name="ic:outline-history" size="24" />
+            <h5>No search results</h5>
+          </div>
+          <div class="min-h-60 flex flex-col gap-4 items-center justify-center">
+            <ProgressBar />
+          </div>
+          <!-- No results div-->
         </div>
       </div>
-    </div>
+    </Transition>
     <!-- Loading State -->
     <div
       v-if="loading"
@@ -306,10 +340,10 @@ const specifics = [
           </div>
           <!--Map Div-->
           <div
-            class="relative md:w-full px-4 py-2 m-2 space-y-2 bg-white bg-opacity-40 backdrop-blur rounded"
+            class="relative md:w-full px-4 py-2 m-2 space-y-2 bg-white bg-opacity-40 backdrop-blur rounded overflow-clip"
           >
             <!--Map content Div-->
-            <div id="map" class="aspect-square md:aspect-auto">map</div>
+            <div id="map" class="aspect-square md:aspect-auto"></div>
           </div>
         </CloudCard>
         <!--Specifics wind speed & others -->
@@ -438,5 +472,24 @@ a {
 }
 input::placeholder {
   color: #333333;
+}
+.grid-responsive {
+  grid-area: span;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+}
+.slide-fade-enter-active .inner {
+  transition-delay: 0.1s;
+  transition: all 0.3s;
+  transform: translateZ(0);
+}
+
+.slide-fade-leave-active .inner {
+  transition: all 0.3s cubic-bezier(1, 0.5, 0.8, 1);
+  transform: translateZ(0);
+}
+.slide-fade-enter-from .inner,
+.slide-fade-leave-to .inner {
+  transform: translateY(100%) translateZ(0);
+  opacity: 0;
 }
 </style>
