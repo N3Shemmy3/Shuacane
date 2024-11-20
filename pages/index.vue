@@ -145,21 +145,21 @@ onMounted(() => {
 });
 const specifics = [
   {
-    icon: "ic:outline-gps-fixed",
+    icon: "meteocons:windsock",
     title: "Wind Speed",
     text: "10km/hr",
   },
   {
-    icon: "ic:outline-gps-fixed",
+    icon: "meteocons:raindrops-fill",
     title: "Rain Chance",
     text: "30%",
   },
   {
-    icon: "ic:outline-gps-fixed",
+    icon: "meteocons:pressure-high-alt-fill",
     title: "Pressure",
     text: "720hpa",
   },
-  { icon: "ic:outline-gps-fixed", title: "UV Index", text: "2.00" },
+  { icon: "meteocons:uv-index", title: "UV Index", text: "2.00" },
 ];
 </script>
 <template>
@@ -205,21 +205,25 @@ const specifics = [
     >
       <!--Main content-->
       <div class="md:w-full space-y-4">
-        <!--Search bar-->
+        <!--Header bar-->
         <div
-          class="fixed left-0 top-0 right-0 z-40 md:relative flex items-center rounded px-4 py-2 bg-white text-gray-700"
+          class="fixed left-0 top-0 right-0 z-40 md:relative flex items-center rounded px-4 py-2 space-x-2 bg-white text-gray-700"
         >
-          <input
-            v-model="text"
-            placeholder="Search"
-            class="w-full outline-none"
-          />
+          <a href="" class="me-auto">Logo</a>
+          <button
+            class="size-10 aspect-square flex items-center justify-center rounded-full bg-blue-600 text-white"
+          >
+            <Icon name="ic:outline-search" size="22" />
+          </button>
+
           <button
             class="size-10 aspect-square flex items-center justify-center rounded-full bg-blue-600 text-white"
           >
             <Icon name="ic:outline-gps-fixed" size="22" />
           </button>
         </div>
+        <!--Spacer for mobile-->
+        <div class="h-14 md:hidden" />
         <!--Cloudy or Sunny Card-->
         <CloudCard
           :cloudy="weatherData.current.condition.text.includes('cloudy')"
@@ -253,19 +257,19 @@ const specifics = [
             >
               <!-- Pressure -->
               <span>
-                <Icon name="solar:water-line-duotone" />
+                <Icon name="solar:water-line-duotone" size="24" />
                 <span> {{ weatherData.current.pressure_mb }} hPa </span>
               </span>
 
               <!-- Humidity -->
               <span>
-                <Icon name="solar:waterdrop-outline" />
+                <Icon name="meteocons:raindrops-fill" size="24" />
                 <span> {{ weatherData.current.humidity }}% </span>
               </span>
 
               <!-- Wind Speed -->
               <span>
-                <Icon name="solar:wind-outline" />
+                <Icon name="meteocons:windsock" size="24" />
                 <span> {{ weatherData.current.wind_kph }} km/h </span>
               </span>
             </div>
@@ -288,28 +292,23 @@ const specifics = [
           </div>
         </CloudCard>
         <!--Specifics wind speed & others -->
-        <ul
-          class="w-full md:w-[600px] mt-8 grid gap-2 md:gap-8 grid-cols-1 md:grid-cols-2"
-        >
+        <ul class="hidden md:grid w-full mt-8 gap-2 md:gap-8 grid-cols-2">
           <li
             v-for="item in specifics"
-            class="flex w-full rounded md:min-h-[100px] px-4 py-2 bg-blue-200"
+            class="w-full flex flex-col items-center justify-center text-center rounded-xl aspect-square md:h-[150px] px-4 py-2 bg-gray-200"
           >
-            <!--Info side-->
-            <div class="w-full flex flex-col justify-center">
-              <h4 class="text-base md:text-xl">{{ item.text }}</h4>
-              <span class="text-sm md:text-base opacity-50">{{
-                item.title
-              }}</span>
-            </div>
-            <!--Icon side-->
-            <div class="flex md:w-4/12">
-              <Icon :name="item.icon" class="m-auto size-6 md:size-12" />
-            </div>
+            <!--Icon -->
+            <Icon :name="item.icon" class="m-4 size-6 md:size-8" />
+            <!--Info -->
+            <h4 class="text-base md:text-xl">{{ item.text }}</h4>
+            <span class="text-sm md:text-base opacity-50">{{
+              item.title
+            }}</span>
           </li>
         </ul>
 
-        <Footer class="mt-auto align-bottom" />
+        <!--Desktop footer-->
+        <Footer class="hidden md:flex mt-auto align-bottom" />
       </div>
       <!--Desktop sidebar-->
 
@@ -385,6 +384,8 @@ const specifics = [
             </li>
           </ul>
         </div>
+        <!--Mobile footer-->
+        <Footer class="md:hidden mt-auto align-bottom" />
       </section>
     </Container>
     <!-- Fallback when no data is loaded -->
