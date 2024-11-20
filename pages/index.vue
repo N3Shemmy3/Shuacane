@@ -20,13 +20,46 @@ const isSearchDialogOpen = ref(false);
 const weatherData = ref(null);
 const forecastData = ref(null);
 const hourlyData = ref([]);
-const city = ref("Solwezi");
+const query = ref("Lusaka"); // Search input
+const cities = ref([]); // List of cities
+const isSearching = ref(false); // Searching state
 const currentTime = ref(null);
 const loading = ref(false);
 const error = ref(null);
 
+// Fetch cities based on search query
+const fetchCities = async () => {
+  if (query.value.trim() === "") {
+    cities.value = [];
+    return;
+  }
+
+  isSearching.value = true; // Indicate search has started
+  try {
+    // Construct URL with query parameters
+    const url = new URL(baseUrl.value + endPoints.value.search);
+    url.searchParams.append("key", apiKey.value);
+    url.searchParams.append("q", query.value);
+
+    // Fetch data from API
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    cities.value = data; // Update cities with API response
+  } catch (error) {
+    console.error("Error fetching cities:", error);
+  } finally {
+    isSearching.value = false; // Indicate search has ended
+  }
+};
 // Function to fetch current weather data
 const fetchWeather = async (city) => {
+  isSearchDialogOpen.value = false;
+  isSearching.value = false;
   fetchForecast(city);
   fetchHourlyData(city);
   const url = `${baseUrl.value}${endPoints.value.current}?key=${apiKey.value}&q=${city}`;
@@ -62,6 +95,7 @@ const fetchWeather = async (city) => {
 
 // Function to fetch weather forecast data
 const fetchForecast = async (city, days = 7) => {
+  if (query.value.length < 3) return;
   const url = `${baseUrl.value}${endPoints.value.forecast}?key=${apiKey.value}&q=${city}&days=${days}`;
   loading.value = true;
   error.value = null;
@@ -172,9 +206,7 @@ function toggleOverlay(event) {
     }
   }
 }
-onMounted(() => {
-  fetchWeather(city.value);
-});
+onMounted(() => {});
 const specifics = [
   {
     icon: "meteocons:windsock",
@@ -199,57 +231,56 @@ const specifics = [
     <!--Search popup overlay-->
     <Transition name="slide-fade" :duration="300">
       <div
+        id="overlay"
         v-if="isSearchDialogOpen"
-        @click="isSearchDialogOpen = !isSearchDialogOpen"
-        class="outer fixed z-50 left-0 top-0 right-0 bottom-0 flex items-center justify-center bg-black bg-opacity-50"
+        @click="
+          (event) => {
+            if (event.id == 'undefined') isSearchDialogOpen = false;
+          }
+        "
+        class="outer fixed z-50 left-0 top-0 right-0 bottom-0 flex justify-center bg-black bg-opacity-50"
       >
         <!-- search popup card-->
         <div
-          class="inner w-full mx-8 md:w-[450px] flex flex-col h-fit bg-white rounded-md overflow-clip"
+          class="inner w-full mx-8 mt-24 md:w-[450px] md:mt-60 flex flex-col h-fit bg-white rounded-md overflow-clip"
         >
           <!-- search searchbox-->
           <div
             id="searchbox"
-            class="w-full flex items-center space-x-2 px-2 py-2 border-b"
+            class="w-full z-10 bg-white flex items-center space-x-2 px-2 py-2 border-b"
           >
             <Icon name="ic:outline-search" size="30" class="mx-2" />
             <input
+              v-model="query"
               type="text"
               class="w-full border-none outline-none"
               placeholder="Search city"
+              @input="fetchCities"
             />
+            <ProgressBar size="32" v-if="isSearching" />
             <button class="size-10 flex items-center justify-center">
               <Icon name="ic:outline-clear" size="22" />
             </button>
           </div>
           <!-- search results-->
-          <ul id="search-saved-cities">
-            <li
-              class="flex items-center px-4 py-1 transition-colors duration-300 hover:bg-gray-100 cursor-pointer"
-            >
-              <Icon name="ic:outline-location-on" size="24" />
-              <div class="ml-2 mr-auto">
-                <h6 class="text-base">Item title</h6>
-                <p class="text-sm opacity-70">item subtitile</p>
-              </div>
-              <button class="p-2">
-                <Icon name="ic:outline-bookmark-border" size="22" />
-              </button>
-            </li>
-          </ul>
-          <ul v-if="false" id="search-results-cicities"></ul>
+          <TransitionGroup tag="ul" name="fade" class="list-container">
+            <ul v-if="cities" id="search-results-cicities">
+              <SearchResultItem
+                v-for="city in cities"
+                :city="city"
+                :key="city.id"
+                @onEndIconClicked="fetchWeather(item.name)"
+              />
+            </ul>
+          </TransitionGroup>
           <!-- No results div-->
           <div
-            v-else
+            v-if="!isSearching && cities.length === 0 && query.trim()"
             class="min-h-60 flex flex-col gap-4 items-center justify-center"
           >
             <Icon name="ic:outline-history" size="24" />
             <h5>No search results</h5>
           </div>
-          <div class="min-h-60 flex flex-col gap-4 items-center justify-center">
-            <ProgressBar />
-          </div>
-          <!-- No results div-->
         </div>
       </div>
     </Transition>
@@ -455,7 +486,7 @@ const specifics = [
       </p>
 
       <button
-        @click="fetchWeather(city)"
+        @click="fetchWeather(query)"
         class="w-fit flex items-center justify-center px-4 py-2 rounded-full aspect-video transition-all duration-300 bg-blue-500 text-white cursor-pointer hover:bg-opacity-50"
       >
         Retry
@@ -491,5 +522,31 @@ input::placeholder {
 .slide-fade-leave-to .inner {
   transform: translateY(100%) translateZ(0);
   opacity: 0;
+}
+/** list animations */
+.list-container {
+  position: relative;
+  padding: 0;
+  list-style-type: none;
+}
+
+/* 1. declare transition */
+.fade-move,
+.fade-enter-active,
+.fade-leave-active {
+  transition: all 0.5s cubic-bezier(0.55, 0, 0.1, 1);
+}
+
+/* 2. declare enter from and leave to state */
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: scaleY(0.01) translate(30px, 0);
+}
+
+/* 3. ensure leaving items are taken out of layout flow so that moving
+      animations can be calculated correctly. */
+.fade-leave-active {
+  position: absolute;
 }
 </style>

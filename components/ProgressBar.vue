@@ -1,7 +1,7 @@
 <script setup>
 const props = defineProps({
   size: {
-    type: Number,
+    type: String,
     default: 65, // Default size in pixels
   },
 });
