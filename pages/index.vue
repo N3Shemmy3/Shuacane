@@ -1,4 +1,6 @@
 <script setup>
+import L from "leaflet";
+
 const apiKey = ref("35f16ed8867e4e7a96973224240711");
 const baseUrl = ref("http://api.weatherapi.com");
 const endPoints = ref({
@@ -14,6 +16,7 @@ const endPoints = ref({
 });
 
 // Ref to store API response
+const isSearchDialogOpen = ref(false);
 const weatherData = ref(null);
 const forecastData = ref(null);
 const hourlyData = ref([]);
@@ -38,6 +41,8 @@ const fetchWeather = async (city) => {
 
     // Store the response data
     weatherData.value = await response.json();
+    //make map object
+    createMap(weatherData.value.location.lon, weatherData.value.location.lat);
     console.log(weatherData.value);
     // Extract and format the time
     if (weatherData.value.location && weatherData.value.location.localtime) {
@@ -67,7 +72,6 @@ const fetchForecast = async (city, days = 7) => {
       throw new Error(`Error: ${response.statusText}`);
     }
     forecastData.value = await response.json();
-    console.log(forecastData.value);
   } catch (err) {
     error.value = err.message;
   } finally {
@@ -103,7 +107,6 @@ const fetchHourlyData = async (city) => {
 
       // Slice the array starting from the current time
       hourlyData.value = hourlyDataArray.slice(startIndex);
-      console.log(hourlyData.value); // Debug: Log the filtered hourly data
     }
   } catch (err) {
     error.value = err.message;
@@ -140,6 +143,19 @@ const getSkyCondition = (condition) => {
   }
   return state;
 };
+const createMap = (lon, lat) => {
+  // Initialize the map
+  const map = L.map("map").setView([lat, lon], 13);
+
+  // Add a tile layer (OpenStreetMap)
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+  }).addTo(map);
+
+  // Add a marker at the city location
+  L.marker([lat, lon]).addTo(map).bindPopup("Current City").openPopup();
+  console.log(map);
+};
 onMounted(() => {
   fetchWeather(city.value);
 });
@@ -164,41 +180,54 @@ const specifics = [
 </script>
 <template>
   <div>
+    <!--Search popup overlay-->
+    <div
+      v-if="isSearchDialogOpen"
+      @click="isSearchDialogOpen = !isSearchDialogOpen"
+      class="fixed z-50 left-0 top-0 right-0 bottom-0 flex items-center justify-center bg-black bg-opacity-50"
+    >
+      <!-- search popup card-->
+      <div
+        class="w-full mx-8 md:w-[450px] flex flex-col h-fit bg-white rounded-md overflow-clip"
+      >
+        <!-- search searchbox-->
+        <div
+          id="searchbox"
+          class="w-full flex items-center space-x-2 px-4 py-2"
+        >
+          <Icon name="ic:outline-search" size="24" />
+          <input
+            type="text"
+            class="w-full border-none outline-none"
+            placeholder="Search city"
+          />
+          <button class="size-10 flex items-center justify-center">
+            <Icon name="ic:outline-clear" size="24" />
+          </button>
+        </div>
+        <!-- search results-->
+        <ul id="search-saved-cities">
+          <li class="flex px-4 py-2"></li>
+        </ul>
+        <ul v-if="false" id="search-results-cicities"></ul>
+        <div
+          v-else
+          class="min-h-60 flex flex-col gap-4 items-center justify-center"
+        >
+          <Icon name="ic:outline-history" size="24" />
+          <h5>No search results</h5>
+        </div>
+      </div>
+    </div>
     <!-- Loading State -->
     <div
       v-if="loading"
       class="fixed z-[100] bg-white left-0 top-0 right-0 bottom-0 overflow-clip flex p-8 flex-col items-center justify-center space-y-2"
     >
-      <svg
-        class="progress-circle"
-        viewBox="0 0 70 70"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <!-- Background circle -->
-        <circle
-          class="progress-circle-bg"
-          cx="35"
-          cy="35"
-          r="20"
-          fill="none"
-          stroke="rgba(0, 0, 0, 0.1)"
-          stroke-width="4"
-        ></circle>
-        <!-- Animated spinning arc -->
-        <circle
-          class="progress-circle-arc"
-          cx="35"
-          cy="35"
-          r="20"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="4"
-          stroke-linecap="round"
-          stroke-dasharray="125.6"
-        ></circle>
-      </svg>
+      <ProgressBar size="70" />
     </div>
 
+    <!--Weather app-->
     <Container
       v-else-if="weatherData"
       class="space-y-8 md:space-y-0 scroll-smooth md:flex-row overflow-clip *:p-4"
@@ -211,6 +240,7 @@ const specifics = [
         >
           <a href="" class="me-auto font-bold text-xl">Shuacane</a>
           <button
+            @click="isSearchDialogOpen = true"
             class="size-10 aspect-square flex items-center justify-center rounded-full bg-blue-600 text-white"
           >
             <Icon name="ic:outline-search" size="22" />
@@ -278,19 +308,8 @@ const specifics = [
           <div
             class="relative md:w-full px-4 py-2 m-2 space-y-2 bg-white bg-opacity-40 backdrop-blur rounded"
           >
-            <LMap
-              ref="map"
-              :zoom="zoom"
-              :center="[47.21322, -1.559482]"
-              :use-global-leaflet="false"
-            >
-              <add
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                attribution='&amp;copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
-                layer-type="base"
-                name="OpenStreetMap"
-              />
-            </LMap>
+            <!--Map content Div-->
+            <div id="map" class="aspect-square md:aspect-auto">map</div>
           </div>
         </CloudCard>
         <!--Specifics wind speed & others -->
@@ -349,7 +368,7 @@ const specifics = [
         </div>
         <div class="space-y-2">
           <span class="mx-4 text-base">7-Day forcast</span>
-          <!--Daily focast loist-->
+          <!--Daily focast list-->
           <ul class="w-full flex flex-col">
             <li
               v-for="(day, index) in forecastData.forecast.forecastday"
@@ -357,12 +376,12 @@ const specifics = [
               class="flex items-center px-4 py-2"
             >
               <div class="w-full flex flex-col">
-                <span class="text-lg font-bold">{{
+                <span class="text-base font-bold">{{
                   new Date(day.date).toLocaleDateString("en-US", {
                     weekday: "long",
                   })
                 }}</span>
-                <span class="text-base opacity-60"
+                <span class="text-sm opacity-60"
                   >{{
                     new Date(day.date).toLocaleDateString("en-US", {
                       day: "numeric",
@@ -417,41 +436,7 @@ a {
 .scroll-smooth::-webkit-scrollbar {
   @apply h-0;
 }
-/* Size of the spinner */
-.progress-circle {
-  width: 64px;
-  height: 64px;
-  animation: rotate 2s linear infinite; /* Smooth rotation */
-}
-
-.progress-circle-arc {
-  stroke-dasharray: 125.6; /* Total circumference */
-  stroke-dashoffset: 0;
-  animation: dash 1.5s ease-in-out infinite;
-  transform-origin: center;
-  transform: rotate(-90deg); /* Start from top */
-}
-
-/* Smooth continuous rotation */
-@keyframes rotate {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-/* Smooth dash transitions */
-@keyframes dash {
-  0% {
-    stroke-dashoffset: 125.6; /* Circle fully hidden */
-  }
-  50% {
-    stroke-dashoffset: 31.4; /* Partial arc visible */
-  }
-  100% {
-    stroke-dashoffset: 125.6; /* Circle hidden again */
-  }
+input::placeholder {
+  color: #333333;
 }
 </style>
