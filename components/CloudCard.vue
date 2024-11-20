@@ -37,13 +37,13 @@ const styles = reactive({
   color: black;
 }
 .clear {
-  @apply bg-blue-300 dark:bg-blue-300 text-[#fafafa];
+  @apply bg-blue-300  text-[#323232];
 }
 .rainy {
-  @apply bg-slate-400 dark:bg-slate-700 text-[#fafafa];
+  @apply bg-slate-400 text-[#fafafa];
 }
 .misty {
-  @apply bg-gray-100 dark:bg-gray-700 text-[#323232];
+  @apply bg-gray-100  text-[#323232];
 }
 .cloudy {
   background: url("/public/clouds-bg.png");

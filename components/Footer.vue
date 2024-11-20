@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col px-4 py-2 text-sm">
+  <div class="flex flex-col px-4 py-2 text-sm justify-center items-center">
     <a href="http://www.icuzambia.net"
       >ICU Zambia <Icon name="ic:outline-open-in-new" size="16" />
     </a>

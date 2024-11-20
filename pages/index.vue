@@ -67,7 +67,7 @@ const fetchForecast = async (city, days = 7) => {
       throw new Error(`Error: ${response.statusText}`);
     }
     forecastData.value = await response.json();
-    // console.log(forecastData.value);
+    console.log(forecastData.value);
   } catch (err) {
     error.value = err.message;
   } finally {
@@ -75,7 +75,8 @@ const fetchForecast = async (city, days = 7) => {
   }
 };
 const fetchHourlyData = async (city) => {
-  const url = `${baseUrl.value}${endPoints.value.forecast}?key=${apiKey.value}&q=${city}&days=1`; // Fetch forecast for 1 day
+  // Fetch forecast for 1 day
+  const url = `${baseUrl.value}${endPoints.value.forecast}?key=${apiKey.value}&q=${city}&days=1`;
   loading.value = true;
   error.value = null;
 
@@ -142,24 +143,42 @@ const getSkyCondition = (condition) => {
 onMounted(() => {
   fetchWeather(city.value);
 });
+const specifics = [
+  {
+    icon: "ic:outline-gps-fixed",
+    title: "Wind Speed",
+    text: "10km/hr",
+  },
+  {
+    icon: "ic:outline-gps-fixed",
+    title: "Rain Chance",
+    text: "30%",
+  },
+  {
+    icon: "ic:outline-gps-fixed",
+    title: "Pressure",
+    text: "720hpa",
+  },
+  { icon: "ic:outline-gps-fixed", title: "UV Index", text: "2.00" },
+];
 </script>
 <template>
   <div>
     <!-- Loading State -->
     <div
       v-if="loading"
-      class="fixed z-[100] bg-white dark:bg-gray-900 left-0 top-0 right-0 bottom-0 overflow-clip flex p-8 flex-col items-center justify-center space-y-2"
+      class="fixed z-[100] bg-white left-0 top-0 right-0 bottom-0 overflow-clip flex p-8 flex-col items-center justify-center space-y-2"
     >
       <svg
         class="progress-circle"
-        viewBox="0 0 50 50"
+        viewBox="0 0 70 70"
         xmlns="http://www.w3.org/2000/svg"
       >
         <!-- Background circle -->
         <circle
           class="progress-circle-bg"
-          cx="25"
-          cy="25"
+          cx="35"
+          cy="35"
           r="20"
           fill="none"
           stroke="rgba(0, 0, 0, 0.1)"
@@ -168,36 +187,39 @@ onMounted(() => {
         <!-- Animated spinning arc -->
         <circle
           class="progress-circle-arc"
-          cx="25"
-          cy="25"
+          cx="35"
+          cy="35"
           r="20"
           fill="none"
           stroke="currentColor"
           stroke-width="4"
           stroke-linecap="round"
           stroke-dasharray="125.6"
-          <!--
-          Total
-          circumference
-          --
-        >
-          >
-        </circle>
+        ></circle>
       </svg>
-      Loading...
     </div>
 
     <Container
-      v-else-if="weatherData != null"
-      class="space-y-8 md:space-y-0 scroll-smooth md:flex-row 2xl:border 2xl:rounded overflow-clip *:p-4"
+      v-else-if="weatherData"
+      class="space-y-8 md:space-y-0 scroll-smooth md:flex-row overflow-clip *:p-4"
     >
-      <!--menu sidebar-->
-      <div class="md:w-80 md:p-0">
-        <SearchBar />
-        <hr />
-        <ul></ul>
-      </div>
-      <div class="md:w-full space-y-4 md:border-x">
+      <!--Main content-->
+      <div class="md:w-full space-y-4">
+        <!--Search bar-->
+        <div
+          class="fixed left-0 top-0 right-0 z-40 md:relative flex items-center rounded px-4 py-2 bg-white text-gray-700"
+        >
+          <input
+            v-model="text"
+            placeholder="Search"
+            class="w-full outline-none"
+          />
+          <button
+            class="size-10 aspect-square flex items-center justify-center rounded-full bg-blue-600 text-white"
+          >
+            <Icon name="ic:outline-gps-fixed" size="22" />
+          </button>
+        </div>
         <!--Cloudy or Sunny Card-->
         <CloudCard
           :cloudy="weatherData.current.condition.text.includes('cloudy')"
@@ -227,7 +249,7 @@ onMounted(() => {
             </div>
             <!-- Specifics -->
             <div
-              class="flex items-center justify-between *:flex *:items-center *:space-x-2 text-sm ,md:text-base text-nowrap"
+              class="flex items-center justify-between *:flex *:items-center *:space-x-2 *:space-y-2 *:flex-col text-sm md:text-base text-nowrap"
             >
               <!-- Pressure -->
               <span>
@@ -265,19 +287,29 @@ onMounted(() => {
             </ul>
           </div>
         </CloudCard>
-        <ul class="mt-8 grid gap-8 grid-cols-2">
+        <!--Specifics wind speed & others -->
+        <ul
+          class="w-full md:w-[600px] mt-8 grid gap-2 md:gap-8 grid-cols-1 md:grid-cols-2"
+        >
           <li
-            v-for="n in 4"
-            class="flex w-full rounded min-h-[150px] p-4 bg-blue-200"
+            v-for="item in specifics"
+            class="flex w-full rounded md:min-h-[100px] px-4 py-2 bg-blue-200"
           >
             <!--Info side-->
-            <div class="w-full">
-              <h4 class="text-lg">Wind</h4>
+            <div class="w-full flex flex-col justify-center">
+              <h4 class="text-base md:text-xl">{{ item.text }}</h4>
+              <span class="text-sm md:text-base opacity-50">{{
+                item.title
+              }}</span>
             </div>
             <!--Icon side-->
-            <div></div>
+            <div class="flex md:w-4/12">
+              <Icon :name="item.icon" class="m-auto size-6 md:size-12" />
+            </div>
           </li>
         </ul>
+
+        <Footer class="mt-auto align-bottom" />
       </div>
       <!--Desktop sidebar-->
 
@@ -292,8 +324,8 @@ onMounted(() => {
             <li
               v-for="(hour, index) in hourlyData"
               :key="index"
-              class="flex flex-col items-center justify-center space-y-2 px-4 py-2 rounded"
-              :class="{ 'bg-[#ffd89e]': index == 0 }"
+              class="flex flex-col items-center justify-center space-y-2 px-4 py-2 rounded duration-300 transition-colors hover:bg-[#ffd89e] hover:bg-opacity-30 hover:cursor-pointer"
+              :class="{ 'bg-[#ffd89e] ': index == 0 }"
             >
               <span v-if="index == 0" class="text-base text-nowrap">Now </span>
               <span v-else class="text-base text-nowrap">
@@ -317,7 +349,7 @@ onMounted(() => {
         <div class="space-y-2">
           <span class="mx-4 text-base">7-Day forcast</span>
           <!--Daily focast loist-->
-          <ul class="flex flex-col">
+          <ul class="w-full flex flex-col">
             <li
               v-for="(day, index) in forecastData.forecast.forecastday"
               :key="index"
@@ -357,7 +389,7 @@ onMounted(() => {
     </Container>
     <!-- Fallback when no data is loaded -->
     <div
-      class="fixed z-[100] bg-white dark:bg-gray-900 left-0 top-0 right-0 bottom-0 overflow-clip flex p-8 flex-col items-center justify-center space-y-2"
+      class="fixed z-[100] bg-white left-0 top-0 right-0 bottom-0 overflow-clip flex p-8 flex-col items-center justify-center space-y-2"
       v-else
     >
       <Icon name="ic:outline-wifi-off" class="size-[144px] md:size-[160px]" />
@@ -373,14 +405,15 @@ onMounted(() => {
         Retry
       </button>
     </div>
-    <Footer class="mt-auto align-bottom" />
   </div>
 </template>
 <style>
 a {
   @apply w-fit h-fit transition-all duration-300 text-blue-800 hover:text-blue-300;
 }
-
+.scroll-smooth::-webkit-scrollbar {
+  @apply h-0;
+}
 /* Size of the spinner */
 .progress-circle {
   width: 64px;
