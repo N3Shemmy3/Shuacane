@@ -209,7 +209,7 @@ const specifics = [
         <div
           class="fixed left-0 top-0 right-0 z-40 md:relative flex items-center rounded px-4 py-2 space-x-2 bg-white text-gray-700"
         >
-          <a href="" class="me-auto">Logo</a>
+          <a href="" class="me-auto font-bold text-xl">Shuacane</a>
           <button
             class="size-10 aspect-square flex items-center justify-center rounded-full bg-blue-600 text-white"
           >
