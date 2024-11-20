@@ -17,6 +17,8 @@ const styles = reactive({
   rainy: props.sky == "rainy",
   misty: props.sky == "misty",
 });
+
+const cloudy = ref(props.cloudy || props);
 </script>
 
 <template>
@@ -40,13 +42,13 @@ const styles = reactive({
   @apply bg-blue-300  text-[#323232];
 }
 .rainy {
-  @apply bg-slate-400 text-[#fafafa];
+  @apply bg-slate-400 text-[#323232];
 }
 .misty {
   @apply bg-gray-100  text-[#323232];
 }
 .cloudy {
-  background: url("/public/clouds-bg.png");
+  background-image: url("/public/clouds-bg.png");
   background-position: 60%;
   background-size: cover;
 }

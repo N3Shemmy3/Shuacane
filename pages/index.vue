@@ -292,7 +292,7 @@ const specifics = [
           </div>
         </CloudCard>
         <!--Specifics wind speed & others -->
-        <ul class="hidden md:grid w-full mt-8 gap-2 md:gap-8 grid-cols-2">
+        <ul class="hidden md:grid w-full mt-8 gap-2 md:gap-8 grid-cols-4">
           <li
             v-for="item in specifics"
             class="w-full flex flex-col items-center justify-center text-center rounded-xl aspect-square md:h-[150px] px-4 py-2 bg-gray-200"
