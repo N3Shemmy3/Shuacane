@@ -38,7 +38,7 @@ const fetchWeather = async (city) => {
 
     // Store the response data
     weatherData.value = await response.json();
-
+    console.log(weatherData.value);
     // Extract and format the time
     if (weatherData.value.location && weatherData.value.location.localtime) {
       const time = new Date(weatherData.value.location.localtime);
@@ -274,21 +274,23 @@ const specifics = [
               </span>
             </div>
           </div>
-          <!--Temp Div-->
+          <!--Map Div-->
           <div
             class="relative md:w-full px-4 py-2 m-2 space-y-2 bg-white bg-opacity-40 backdrop-blur rounded"
           >
-            <h6 class="text-sm font-bold">Tempreture</h6>
-            <ul class="flex justify-between items-center">
-              <li
-                v-for="n in 4"
-                class="flex flex-col items-center text-center px-2 py-1 rounded"
-              >
-                <Icon name="meteocons:clear-day-fill" />
-                <span class="text-[12px]"> Morning </span>
-                <span>26°</span>
-              </li>
-            </ul>
+            <LMap
+              ref="map"
+              :zoom="zoom"
+              :center="[47.21322, -1.559482]"
+              :use-global-leaflet="false"
+            >
+              <add
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='&amp;copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
+                layer-type="base"
+                name="OpenStreetMap"
+              />
+            </LMap>
           </div>
         </CloudCard>
         <!--Specifics wind speed & others -->
