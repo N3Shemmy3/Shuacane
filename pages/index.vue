@@ -241,7 +241,7 @@ onMounted(() => {
     <Transition name="slide-fade" :duration="300">
       <div
         id="overlay"
-        v-if="isSearchDialogOpen"
+        v-show="isSearchDialogOpen"
         @click="
           (event) => {
             if (event.id == 'undefined') isSearchDialogOpen = false;
