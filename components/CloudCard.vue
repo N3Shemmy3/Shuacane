@@ -7,7 +7,7 @@ const props = defineProps({
   sky: {
     validator(value, props) {
       // The value must match one of these strings
-      return ["sunny", "rainy", "misty"].includes(value);
+      return ["sunny", "rainy", "misty", "clear", "cloudy"].includes(value);
     },
     default: "sunny",
   },
@@ -16,6 +16,8 @@ const styles = reactive({
   sunny: props.sky == "sunny",
   rainy: props.sky == "rainy",
   misty: props.sky == "misty",
+  clear: props.sky == "clear",
+  cloudy: props.sky == "cloudy",
 });
 
 const cloudy = ref(props.cloudy || props);
@@ -39,13 +41,13 @@ const cloudy = ref(props.cloudy || props);
   color: black;
 }
 .clear {
-  @apply bg-blue-300  text-[#323232];
+  @apply bg-blue-100  text-[#323232];
 }
 .rainy {
   @apply bg-slate-400 text-[#323232];
 }
 .misty {
-  @apply bg-gray-100  text-[#323232];
+  @apply text-[#323232];
 }
 .cloudy {
   background-image: url("/public/clouds-bg.png");

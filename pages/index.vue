@@ -1,5 +1,5 @@
 <script setup>
-import L from "leaflet";
+import L, { map } from "leaflet";
 
 const apiKey = ref("35f16ed8867e4e7a96973224240711");
 const baseUrl = ref("http://api.weatherapi.com");
@@ -19,6 +19,7 @@ const endPoints = ref({
 const isSearchDialogOpen = ref(false);
 const weatherData = ref(null);
 const forecastData = ref(null);
+const location = ref(null);
 const hourlyData = ref([]);
 const query = ref("Lusaka"); // Search input
 const cities = ref([]); // List of cities
@@ -77,6 +78,44 @@ const fetchWeather = async (city) => {
     //make map object
     createMap(weatherData.value.location.lon, weatherData.value.location.lat);
     console.log(weatherData.value);
+
+    // Extract and format the time
+    if (weatherData.value.location && weatherData.value.location.localtime) {
+      const time = new Date(weatherData.value.location.localtime);
+      currentTime.value = time.toLocaleString("en-US", {
+        hour: "numeric",
+        minute: "numeric",
+        hour12: true,
+      });
+    }
+  } catch (err) {
+    error.value = err.message;
+  } finally {
+    loading.value = false;
+  }
+};
+// Function to fetch current weather data using latitude and longitude
+const fetchWeatherByCoords = async (lat, lon) => {
+  isSearchDialogOpen.value = false;
+  isSearching.value = false;
+
+  const url = `${baseUrl.value}${endPoints.value.current}?key=${apiKey.value}&q=${lat},${lon}`;
+  loading.value = true;
+  error.value = null;
+
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Error: ${response.statusText}`);
+    }
+
+    // Store the response data
+    weatherData.value = await response.json();
+
+    // Make map object
+    createMap(lon, lat);
+    console.log(weatherData.value);
+
     // Extract and format the time
     if (weatherData.value.location && weatherData.value.location.localtime) {
       const time = new Date(weatherData.value.location.localtime);
@@ -188,43 +227,40 @@ const createMap = (lon, lat) => {
 
   // Add a marker at the city location
   L.marker([lat, lon]).addTo(map).bindPopup("Current City").openPopup();
-  console.log(map);
 };
 // toggle overlay visibility depending on the id
 function toggleOverlay(event) {
   const targetId = event.id;
   switch (targetId) {
-    case "message-overlay": {
-      //hide the other to avoid both being vissible at once
-      showSearchView.value = false;
-      showDialog.value = !showDialog.value;
-    }
-    case "search-overlay": {
-      //hide the other to avoid both being vissible at once
-      showDialog.value = false;
-      showSearchView.value = !showSearchView;
+    case "overlay": {
+      isSearchDialogOpen.value = !isSearchDialogOpen.value;
     }
   }
 }
-onMounted(() => {});
-const specifics = [
-  {
-    icon: "meteocons:windsock",
-    title: "Wind Speed",
-    text: "10km/hr",
-  },
-  {
-    icon: "meteocons:raindrops-fill",
-    title: "Rain Chance",
-    text: "30%",
-  },
-  {
-    icon: "meteocons:pressure-high-alt-fill",
-    title: "Pressure",
-    text: "720hpa",
-  },
-  { icon: "meteocons:uv-index", title: "UV Index", text: "2.00" },
-];
+const getLocation = () => {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        location.value = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        };
+        fetchWeatherByCoords(location.value.lat, location.value.lon);
+        error.value = null; // Clear any previous error
+      },
+      (err) => {
+        error.value = `Error: ${err.message}`;
+      }
+    );
+  } else {
+    error.value = "Geolocation is not supported by your browser.";
+  }
+};
+
+onMounted(() => {
+  getLocation;
+});
+
 const isOnline = ref(true);
 
 const updateStatus = () => {
@@ -242,11 +278,7 @@ onMounted(() => {
       <div
         id="overlay"
         v-show="isSearchDialogOpen"
-        @click="
-          (event) => {
-            if (event.id == 'undefined') isSearchDialogOpen = false;
-          }
-        "
+        @click="toggleOverlay($event)"
         class="outer fixed z-50 left-0 top-0 right-0 bottom-0 flex justify-center bg-black bg-opacity-50"
       >
         <!-- search popup card-->
@@ -267,9 +299,6 @@ onMounted(() => {
               @input="fetchCities"
             />
             <ProgressBar size="32" v-if="isSearching" />
-            <button class="size-10 flex items-center justify-center">
-              <Icon name="ic:outline-clear" size="22" />
-            </button>
           </div>
           <!-- search results-->
           <TransitionGroup tag="ul" name="fade" class="list-container">
@@ -278,18 +307,10 @@ onMounted(() => {
                 v-for="city in cities"
                 :city="city"
                 :key="city.id"
-                @onEndIconClicked="fetchWeather(item.name)"
+                @click="fetchWeather(city.name)"
               />
             </ul>
           </TransitionGroup>
-          <!-- No results div-->
-          <div
-            v-if="!isSearching && cities.length === 0 && query.trim()"
-            class="min-h-60 flex flex-col gap-4 items-center justify-center"
-          >
-            <Icon name="ic:outline-history" size="24" />
-            <h5>No search results</h5>
-          </div>
         </div>
       </div>
     </Transition>
@@ -303,7 +324,7 @@ onMounted(() => {
 
     <!--Weather app-->
     <Container
-      v-else-if="weatherData"
+      v-else-if="weatherData != null"
       class="space-y-8 md:space-y-0 scroll-smooth md:flex-row overflow-clip *:p-4"
     >
       <!--Main content-->
@@ -312,16 +333,45 @@ onMounted(() => {
         <div
           class="fixed left-0 top-0 right-0 z-40 md:relative flex items-center rounded px-4 py-2 space-x-2 bg-white text-gray-700"
         >
-          <a href="" class="me-auto font-bold text-xl">Shuacane</a>
+          <a
+            href=""
+            class="me-auto font-bold text-xl"
+            :class="{
+              'text-[#fdbc59]':
+                getSkyCondition(weatherData.current.condition.text) == 'sunny',
+              'text-slate-400':
+                getSkyCondition(weatherData.current.condition.text) == 'rainy',
+              'text-gray-100':
+                getSkyCondition(weatherData.current.condition.text) == 'misty',
+            }"
+            >Shuacane</a
+          >
           <button
             @click="isSearchDialogOpen = true"
             class="size-10 aspect-square flex items-center justify-center rounded-full bg-blue-600 text-white"
+            :class="{
+              sunny:
+                getSkyCondition(weatherData.current.condition.text) == 'sunny',
+              rainy:
+                getSkyCondition(weatherData.current.condition.text) == 'rainy',
+              misty:
+                getSkyCondition(weatherData.current.condition.text) == 'misty',
+            }"
           >
             <Icon name="ic:outline-search" size="22" />
           </button>
 
           <button
+            @click="getLocation"
             class="size-10 aspect-square flex items-center justify-center rounded-full bg-blue-600 text-white"
+            :class="{
+              sunny:
+                getSkyCondition(weatherData.current.condition.text) == 'sunny',
+              rainy:
+                getSkyCondition(weatherData.current.condition.text) == 'rainy',
+              misty:
+                getSkyCondition(weatherData.current.condition.text) == 'misty',
+            }"
           >
             <Icon name="ic:outline-gps-fixed" size="22" />
           </button>
@@ -380,25 +430,80 @@ onMounted(() => {
           </div>
           <!--Map Div-->
           <div
-            class="relative md:w-full px-4 py-2 m-2 space-y-2 bg-white bg-opacity-40 backdrop-blur rounded overflow-clip"
+            class="relative md:w-full bg-white bg-opacity-40 backdrop-blur rounded overflow-clip"
           >
             <!--Map content Div-->
-            <div id="map" class="aspect-square md:aspect-auto"></div>
+            <div
+              v-if="map"
+              id="map"
+              class="aspect-sqaure m-auto h-64 flex md:aspect-auto md:absolute md:top-0 md:right-0 md:left-0 md:bottom-0"
+            >
+              <h4 class="m-auto">Map unavailable</h4>
+            </div>
           </div>
         </CloudCard>
         <!--Specifics wind speed & others -->
-        <ul class="hidden md:grid w-full mt-8 gap-2 md:gap-8 grid-cols-4">
+        <ul class="hidden md:grid w-full mt-8 gap-2 md:gap-8 grid-cols-3">
           <li
-            v-for="item in specifics"
             class="w-full flex flex-col items-center justify-center text-center rounded-xl aspect-square md:h-[150px] px-4 py-2 bg-gray-200"
+            :class="{
+              sunny:
+                getSkyCondition(weatherData.current.condition.text) == 'sunny',
+              rainy:
+                getSkyCondition(weatherData.current.condition.text) == 'rainy',
+              misty:
+                getSkyCondition(weatherData.current.condition.text) == 'misty',
+            }"
           >
             <!--Icon -->
-            <Icon :name="item.icon" class="m-4 size-6 md:size-8" />
+            <Icon name="meteocons:windsock" class="m-4 size-6 md:size-8" />
             <!--Info -->
-            <h4 class="text-base md:text-xl">{{ item.text }}</h4>
-            <span class="text-sm md:text-base opacity-50">{{
-              item.title
-            }}</span>
+            <h4 class="text-base md:text-xl">
+              {{ weatherData.current.wind_kph }} km/hr
+            </h4>
+            <span class="text-sm md:text-base opacity-50">Wind Speed</span>
+          </li>
+          <li
+            class="w-full flex flex-col items-center justify-center text-center rounded-xl aspect-square md:h-[150px] px-4 py-2 bg-gray-200"
+            :class="{
+              sunny:
+                getSkyCondition(weatherData.current.condition.text) == 'sunny',
+              rainy:
+                getSkyCondition(weatherData.current.condition.text) == 'rainy',
+              misty:
+                getSkyCondition(weatherData.current.condition.text) == 'misty',
+            }"
+          >
+            <!--Icon -->
+            <Icon
+              name="meteocons:raindrops-fill"
+              class="m-4 size-6 md:size-8"
+            />
+            <!--Info -->
+            <h4 class="text-base md:text-xl">
+              {{ weatherData.current.precip_mm }} %
+            </h4>
+            <span class="text-sm md:text-base opacity-50">Chances of Rain</span>
+          </li>
+
+          <li
+            class="w-full flex flex-col items-center justify-center text-center rounded-xl aspect-square md:h-[150px] px-4 py-2 bg-gray-200"
+            :class="{
+              sunny:
+                getSkyCondition(weatherData.current.condition.text) == 'sunny',
+              rainy:
+                getSkyCondition(weatherData.current.condition.text) == 'rainy',
+              misty:
+                getSkyCondition(weatherData.current.condition.text) == 'misty',
+            }"
+          >
+            <!--Icon -->
+            <Icon name="meteocons:uv-index" class="m-4 size-6 md:size-8" />
+            <!--Info -->
+            <h4 class="text-base md:text-xl">
+              {{ weatherData.current.uv }}
+            </h4>
+            <span class="text-sm md:text-base opacity-50">UV Index</span>
           </li>
         </ul>
 
@@ -418,8 +523,18 @@ onMounted(() => {
             <li
               v-for="(hour, index) in hourlyData"
               :key="index"
-              class="flex flex-col items-center justify-center space-y-2 px-4 py-2 rounded duration-300 transition-colors hover:bg-[#ffd89e] hover:bg-opacity-30 hover:cursor-pointer"
-              :class="{ 'bg-[#ffd89e] ': index == 0 }"
+              class="flex flex-col items-center justify-center space-y-2 px-4 py-2 rounded-xl duration-300 transition-colors bg-opacity-30 hover:cursor-pointer"
+              :class="{
+                sunny:
+                  getSkyCondition(weatherData.current.condition.text) ==
+                    'sunny' && index == 0,
+                rainy:
+                  getSkyCondition(weatherData.current.condition.text) ==
+                    'rainy' && index == 0,
+                misty:
+                  getSkyCondition(weatherData.current.condition.text) ==
+                    'misty' && index == 0,
+              }"
             >
               <span v-if="index == 0" class="text-base text-nowrap">Now </span>
               <span v-else class="text-base text-nowrap">
@@ -443,11 +558,23 @@ onMounted(() => {
         <div class="space-y-2">
           <span class="mx-4 text-base">7-Day forcast</span>
           <!--Daily focast list-->
-          <ul class="w-full flex flex-col">
+          <ul class="w-full flex flex-col gap-2 px-4 md:px-0">
             <li
               v-for="(day, index) in forecastData.forecast.forecastday"
               :key="index"
-              class="flex items-center px-4 py-2"
+              class="flex items-center px-4 py-2 rounded-xl"
+              :class="{
+                sunny:
+                  getSkyCondition(weatherData.current.condition.text) ==
+                  'sunny',
+                rainy:
+                  getSkyCondition(weatherData.current.condition.text) ==
+                  'rainy',
+                misty:
+                  getSkyCondition(weatherData.current.condition.text) ==
+                  'misty',
+              }"
+              s
             >
               <div class="w-full flex flex-col">
                 <span class="text-base font-bold">{{
@@ -486,7 +613,7 @@ onMounted(() => {
     <!-- Fallback when no data is loaded -->
     <div
       class="fixed z-[100] bg-white left-0 top-0 right-0 bottom-0 overflow-clip flex p-8 flex-col items-center justify-center space-y-2"
-      v-if="isOnline"
+      v-else
     >
       <Icon name="ic:outline-wifi-off" class="size-[144px] md:size-[160px]" />
       <h3 class="text-xl md:text-2xl">You're offline</h3>
@@ -497,6 +624,11 @@ onMounted(() => {
       <button
         @click="fetchWeather(query)"
         class="w-fit flex items-center justify-center px-4 py-2 rounded-full aspect-video transition-all duration-300 bg-blue-500 text-white cursor-pointer hover:bg-opacity-50"
+        :class="{
+          sunny: getSkyCondition(weatherData.current.condition.text) == 'sunny',
+          rainy: getSkyCondition(weatherData.current.condition.text) == 'rainy',
+          misty: getSkyCondition(weatherData.current.condition.text) == 'misty',
+        }"
       >
         Retry
       </button>
@@ -512,6 +644,19 @@ a {
 }
 input::placeholder {
   color: #333333;
+}
+.sunny {
+  background-color: #ffd89e;
+  color: black;
+}
+.clear {
+  @apply bg-blue-100  text-[#323232];
+}
+.rainy {
+  @apply bg-slate-400 text-[#323232];
+}
+.misty {
+  @apply bg-gray-100  text-[#323232];
 }
 .grid-responsive {
   grid-area: span;
